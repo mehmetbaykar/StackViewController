@@ -10,7 +10,7 @@ import UIKit
 import XCTest
 
 //@testable
-import StackViewControllerDemo
+@testable import StackViewControllerDemo
 
 class StackViewControllerDemoTests: XCTestCase {
     
@@ -39,13 +39,13 @@ class StackViewControllerDemoTests: XCTestCase {
     func testPushViewController() {
         let stack = StackViewController()
         
-        stack.pushViewController(a, animated: false)
+        stack.pushViewController(toViewController: a, animated: false)
         XCTAssert(stack.topViewController! == a)
         
-        stack.pushViewController(b, animated: false)
+        stack.pushViewController(toViewController: b, animated: false)
         XCTAssert(stack.topViewController! == b)
         
-        stack.pushViewController(b, animated: false)
+        stack.pushViewController(toViewController: b, animated: false)
         XCTAssert(stack.topViewController! == b)
     }
     
@@ -53,19 +53,19 @@ class StackViewControllerDemoTests: XCTestCase {
         let stack = StackViewController()
         stack.viewControllers = [a, b, c, d, e, f]
         
-        var poppedViewController = stack.popViewControllerAnimated(false)
+        var poppedViewController = stack.popViewControllerAnimated(animated: false)
         XCTAssert(stack.viewControllers == [a, b, c, d, e])
         XCTAssert(poppedViewController == f)
         
-        var poppedViewControllers = stack.popToViewController(c, animated: false)
+        var poppedViewControllers = stack.popToViewController(viewController: c, animated: false)
         XCTAssert(stack.viewControllers == [a, b, c])
         XCTAssert(poppedViewControllers == [d, e])
         
-        poppedViewControllers = stack.popToRootViewControllerAnimated(false)
+        poppedViewControllers = stack.popToRootViewControllerAnimated(animated: false)
         XCTAssert(stack.viewControllers == [a])
         XCTAssert(poppedViewControllers == [b, c])
         
-        poppedViewController = stack.popViewControllerAnimated(false)
+        poppedViewController = stack.popViewControllerAnimated(animated: false)
         XCTAssert(stack.viewControllers == [a])
         XCTAssertNil(poppedViewController)
     }
@@ -78,50 +78,50 @@ class StackViewControllerDemoTests: XCTestCase {
         XCTAssert(stack.viewControllers.count == 2)
         XCTAssert(stack.viewControllers == [b, e])
         
-        stack.pushViewController(c, animated: false)
+        stack.pushViewController(toViewController: c, animated: false)
         XCTAssert(stack.viewControllers == [b, e, c])
         
-        stack.setViewControllers([f, e, c], animated: false)
+        stack.setViewControllers(viewControllers: [f, e, c], animated: false)
         XCTAssert(stack.viewControllers == [f, e, c])
     }
     
     func testChildViewControllers() {
         let stack = StackViewController()
         stack.viewControllers = [a, b, c]
-        XCTAssert(stack.childViewControllers.count == 3)
-        XCTAssert(stack.childViewControllers.last == c)
+        XCTAssert(stack.children.count == 3)
+        XCTAssert(stack.children.last == c)
         
-        stack.setViewControllers([d, e], animated: false)
-        XCTAssert(stack.childViewControllers.count == 2)
-        XCTAssert(stack.childViewControllers.last == e)
+        stack.setViewControllers(viewControllers: [d, e], animated: false)
+        XCTAssert(stack.children.count == 2)
+        XCTAssert(stack.children.last == e)
         
-        stack.pushViewController(f, animated: false)
-        XCTAssert(stack.childViewControllers.count == 3)
-        XCTAssert(stack.childViewControllers.last == f)
+        stack.pushViewController(toViewController: f, animated: false)
+        XCTAssert(stack.children.count == 3)
+        XCTAssert(stack.children.last == f)
         
-        stack.popViewControllerAnimated(false)
-        XCTAssert(stack.childViewControllers.count == 2)
-        XCTAssert(stack.childViewControllers.last == e)
+        stack.popViewControllerAnimated(animated:false)
+        XCTAssert(stack.children.count == 2)
+        XCTAssert(stack.children.last == e)
         
-        stack.popToRootViewControllerAnimated(false)
-        XCTAssert(stack.childViewControllers.count == 1)
-        XCTAssert(stack.childViewControllers.last == d)
+        stack.popViewControllerAnimated(animated:false)
+        XCTAssert(stack.children.count == 1)
+        XCTAssert(stack.children.last == d)
                 
         stack.viewControllers = [a, b, c, d]
         stack.viewControllers = [e, f, a]
-        XCTAssert(stack.childViewControllers.count == 3)
+        XCTAssert(stack.children.count == 3)
         
         // those are expected since we cannot reorder childViewControllers
         
-        XCTAssert(stack.childViewControllers == [a, e, f])
+        XCTAssert(stack.children == [a, e, f])
         
         stack.viewControllers = [a, b, c, d]
-        stack.setViewControllers([d, a, c], animated: false)
+        stack.setViewControllers(viewControllers:[d, a, c], animated: false)
         
-        XCTAssert(stack.childViewControllers == [a, c, d])
+        XCTAssert(stack.children == [a, c, d])
         
         stack.viewControllers = []
-        XCTAssert(stack.childViewControllers.isEmpty)
+        XCTAssert(stack.children.isEmpty)
     }
     
     func testUIViewControllerExtension() {
@@ -140,7 +140,7 @@ class StackViewControllerDemoTests: XCTestCase {
             XCTAssert(viewController.stackViewController! == stack)
         }
         
-        stack.popViewControllerAnimated(false)
+        stack.popViewControllerAnimated(animated:false)
         XCTAssertNil(viewControllers.last!.stackViewController)
         
         stack.viewControllers = []

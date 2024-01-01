@@ -14,7 +14,7 @@ class ScrollViewController: UIViewController {
 
 extension ScrollViewController: StackViewControllerProtocol {
     func nextViewControllerOnStackViewController(stackViewController: StackViewController) -> UIViewController? {
-        return TableViewController(style: .Grouped)
+        return TableViewController(style: .grouped)
     }
     
     func scrollViewOnStackViewController(stackViewController: StackViewController) -> UIScrollView? {

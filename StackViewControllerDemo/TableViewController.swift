@@ -52,7 +52,7 @@ class TableViewController: UITableViewController {
 
 extension TableViewController: StackViewControllerProtocol {
     func nextViewControllerOnStackViewController(stackViewController: StackViewController) -> UIViewController? {
-        return TableViewController(style: .Grouped)
+        return TableViewController(style: .grouped)
     }
 }
 

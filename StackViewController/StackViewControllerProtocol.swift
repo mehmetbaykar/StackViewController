@@ -8,11 +8,24 @@
 
 import UIKit
 
-@objc
+
 public protocol StackViewControllerProtocol {
     
-    optional func nextViewControllerOnStackViewController(stackViewController: StackViewController) -> UIViewController?
+    func nextViewControllerOnStackViewController(stackViewController: StackViewController) -> UIViewController?
     
-    optional func scrollViewOnStackViewController(stackViewController: StackViewController) -> UIScrollView?
+    func scrollViewOnStackViewController(stackViewController: StackViewController) -> UIScrollView?
+    
+}
+
+
+public extension StackViewControllerProtocol {
+    
+    func nextViewControllerOnStackViewController(stackViewController: StackViewController) -> UIViewController? {
+        return nil
+    }
+    
+    func scrollViewOnStackViewController(stackViewController: StackViewController) -> UIScrollView? {
+        return nil
+    }
     
 }

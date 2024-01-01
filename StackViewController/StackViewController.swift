@@ -23,7 +23,7 @@ public class StackViewController: UIViewController, UIGestureRecognizerDelegate 
     }
     
     /// Shadow customization
-    public var shadowColor = UIColor.lightGrayColor()
+    public var shadowColor = UIColor.lightGray
     public var shadowOffset = CGSizeMake(-2, 0)
     public var shadowOpacity = 0.5
     
@@ -33,7 +33,7 @@ public class StackViewController: UIViewController, UIGestureRecognizerDelegate 
             return self.stack
         }
         set {
-            self.setViewControllers(newValue, animated: false)
+            self.setViewControllers(viewControllers: newValue, animated: false)
         }
     }
     
@@ -47,13 +47,19 @@ public class StackViewController: UIViewController, UIGestureRecognizerDelegate 
         return self.viewControllers.first
     }
     
+    
     // MARK: - Initializations
     
     /// Convenience method pushes the root view controller without animation.
-    public convenience init(rootViewController: UIViewController) {
-        self.init(nibName: nil, bundle: nil)
+    public required init(rootViewController: UIViewController) {
+        super.init(nibName: nil, bundle: nil)
         
-        self.pushViewController(rootViewController, animated: false)
+        self.pushViewController(toViewController: rootViewController, animated: false)
+        
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
     }
     
     // MARK: - APIs
@@ -65,13 +71,13 @@ public class StackViewController: UIViewController, UIGestureRecognizerDelegate 
         if viewControllers.isEmpty {
             // clean stack
             for viewController in self.viewControllers {
-                viewController.willMoveToParentViewController(nil)
+                viewController.willMove(toParent: nil)
                 if viewController == fromViewController {
                     viewController.view.removeFromSuperview()
                 }
-                viewController.removeFromParentViewController()
+                viewController.removeFromParent()
             }
-            self.stack.removeAll(keepCapacity: false)
+            self.stack.removeAll(keepingCapacity: false)
             
             return
         }
@@ -86,8 +92,8 @@ public class StackViewController: UIViewController, UIGestureRecognizerDelegate 
             if viewController == toViewController {
                 continue
             }
-            self.addChildViewController(viewController)
-            viewController.didMoveToParentViewController(self)
+            self.addChild(viewController)
+            viewController.didMove(toParent: self)
         }
         
         for viewController in self.viewControllers {
@@ -97,8 +103,8 @@ public class StackViewController: UIViewController, UIGestureRecognizerDelegate 
             if viewController == fromViewController {
                 continue
             }
-            viewController.willMoveToParentViewController(nil)
-            viewController.removeFromParentViewController()
+            viewController.willMove(toParent: nil)
+            viewController.removeFromParent()
         }
         
         let previousStack = self.stack
@@ -112,12 +118,12 @@ public class StackViewController: UIViewController, UIGestureRecognizerDelegate 
         if previousStack.contains(toViewController) {
             // new top item alread on the stack, use a pop transition
             
-            self.popFromViewController(fromViewController!, toViewController: toViewController, animated: animated) {
+            self.popFromViewController(fromViewController: fromViewController!, toViewController: toViewController, animated: animated) {
                 if let fromViewController = fromViewController {
                     if !self.stack.contains(fromViewController) {
-                        fromViewController.willMoveToParentViewController(nil)
+                        fromViewController.willMove(toParent: nil)
                         fromViewController.view.removeFromSuperview()
-                        fromViewController.removeFromParentViewController()
+                        fromViewController.removeFromParent()
                     }
                     else {
                         fromViewController.view.removeFromSuperview()
@@ -130,21 +136,21 @@ public class StackViewController: UIViewController, UIGestureRecognizerDelegate 
         
         // use a push transition
         
-        self.addChildViewController(toViewController)
+        self.addChild(toViewController)
         
-        self.pushFromViewController(fromViewController, toViewController: toViewController, animated: animated) {
+        self.pushFromViewController(fromViewController: fromViewController, toViewController: toViewController, animated: animated) {
             if let fromViewController = fromViewController {
                 if !self.stack.contains(fromViewController) {
-                    fromViewController.willMoveToParentViewController(nil)
+                    fromViewController.willMove(toParent: nil)
                     fromViewController.view.removeFromSuperview()
-                    fromViewController.removeFromParentViewController()
+                    fromViewController.removeFromParent()
                 }
                 else {
                     fromViewController.view.removeFromSuperview()
                 }
             }
             
-            toViewController.didMoveToParentViewController(self)
+            toViewController.didMove(toParent: self)
         }
         
     }
@@ -159,17 +165,18 @@ public class StackViewController: UIViewController, UIGestureRecognizerDelegate 
         
         let fromViewController = self.topViewController
         
-        self.addChildViewController(toViewController)
+        self.addChild(toViewController)
         self.stack.append(toViewController)
         
-        self.pushFromViewController(fromViewController, toViewController: toViewController, animated: animated) {
+        self.pushFromViewController(fromViewController: fromViewController, toViewController: toViewController, animated: animated) {
             fromViewController?.view.removeFromSuperview()
             
-            toViewController.didMoveToParentViewController(self)
+            toViewController.didMove(toParent: self)
         }
     }
     
     /// Returns the popped controller.
+    @discardableResult
     public func popViewControllerAnimated(animated: Bool) -> UIViewController? {
         if self.viewControllers.count < 2 {
             return nil
@@ -177,14 +184,14 @@ public class StackViewController: UIViewController, UIGestureRecognizerDelegate 
         
         let fromViewController = self.topViewController!
         
-        let topIndex = self.viewControllers.indexOf(fromViewController)
+        let topIndex = self.viewControllers.firstIndex(of: fromViewController)
         let toViewController = self.viewControllers[topIndex! - 1]
         
-        fromViewController.willMoveToParentViewController(nil)
+        fromViewController.willMove(toParent: nil)
         
-        self.popFromViewController(fromViewController, toViewController: toViewController, animated: animated) {
+        self.popFromViewController(fromViewController: fromViewController, toViewController: toViewController, animated: animated) {
             fromViewController.view.removeFromSuperview()
-            fromViewController.removeFromParentViewController()
+            fromViewController.removeFromParent()
             
             self.stack.removeLast()
         }
@@ -201,24 +208,24 @@ public class StackViewController: UIViewController, UIGestureRecognizerDelegate 
         let stackAfterPopped = [self.rootViewController!]
         let popped = Array(self.viewControllers[1..<self.viewControllers.count])
         
-        self.setViewControllers(stackAfterPopped, animated: animated)
+        self.setViewControllers(viewControllers: stackAfterPopped, animated: animated)
         
         return popped
     }
     
     /// Pops view controllers until the one specified is on top. Returns the popped controllers.
     public func popToViewController(viewController: UIViewController, animated: Bool) -> [UIViewController] {
-        let index = self.viewControllers.indexOf(viewController)
+        let index = self.viewControllers.firstIndex(of:viewController)
         if index == nil {
             let popped = self.viewControllers
-            self.setViewControllers([], animated: animated)
+            self.setViewControllers(viewControllers: [], animated: animated)
             return popped
         }
         
         let stackAfterPopped = Array(self.viewControllers[0...index!])
         let popped = Array(self.viewControllers[index! + 1..<self.viewControllers.count])
         
-        self.setViewControllers(stackAfterPopped, animated: animated)
+        self.setViewControllers(viewControllers: stackAfterPopped, animated: animated)
         
         return popped
     }
@@ -240,59 +247,59 @@ public class StackViewController: UIViewController, UIGestureRecognizerDelegate 
         
         let gestureRecognizer = StackPanGestureRecognizer()
         gestureRecognizer.delegate = self
-        gestureRecognizer.addTarget(self, action: "handlePanGesture:")
+        gestureRecognizer.addTarget(self, action: #selector(StackViewController.handlePanGesture(recognizer:)))
         self.view.addGestureRecognizer(gestureRecognizer)
         self.panGestureRecognizer = gestureRecognizer
     }
     
     // MARK: - Pan gesture
     
-    func handlePanGesture(recognizer: StackPanGestureRecognizer) {
+    @objc func handlePanGesture(recognizer: StackPanGestureRecognizer) {
         if recognizer.direction == .Pop {
-            self.handlePopGesture(recognizer)
+            self.handlePopGesture(recognizer: recognizer)
         }
         else if recognizer.direction == .Push {
-            self.handlePushGesture(recognizer)
+            self.handlePushGesture(recognizer: recognizer)
         }
     }
     
     func handlePushGesture(recognizer: StackPanGestureRecognizer) {
-        if recognizer.state == .Began {
+        if recognizer.state == .began {
             self.currentViewController = nil
             self.nextViewController = nil
             
             guard let dataSource = self.topViewController as? StackViewControllerProtocol else {
-                recognizer.state = .Failed
+                recognizer.state = .failed
                 return
             }
             
-            guard let nextViewController = dataSource.nextViewControllerOnStackViewController?(self) else {
-                recognizer.state = .Failed
+            guard let nextViewController = dataSource.nextViewControllerOnStackViewController(stackViewController: self) else {
+                recognizer.state = .failed
                 return
             }
             
             self.nextViewController = nextViewController
             self.currentViewController = self.topViewController
             
-            self.addChildViewController(nextViewController)
+            self.addChild(nextViewController)
             nextViewController.view.frame = self.view.bounds
             nextViewController.view.frame.origin.x = CGRectGetWidth(self.view.bounds)
-            nextViewController.view.autoresizingMask = [.FlexibleWidth, .FlexibleHeight]
+            nextViewController.view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
             self.view.insertSubview(nextViewController.view, aboveSubview: self.currentViewController!.view)
-            nextViewController.didMoveToParentViewController(self)
+            nextViewController.didMove(toParent: self)
             
-            self.applyShadowToView(nextViewController.view)
+            self.applyShadowToView(view: nextViewController.view)
             
             return
         }
         
-        guard let toViewController = self.nextViewController, fromViewController = self.currentViewController else {
-            recognizer.state = .Failed
+        guard let toViewController = self.nextViewController, let fromViewController = self.currentViewController else {
+            recognizer.state = .failed
             return
         }
         
-        if recognizer.state == .Changed {
-            let translation = recognizer.translationInView(self.view)
+        if recognizer.state == .changed {
+            let translation = recognizer.translation(in: self.view)
             let progress = translation.x/CGRectGetWidth(self.view.bounds)
             
             toViewController.view.frame.origin.x = min(CGRectGetWidth(self.view.bounds), CGRectGetWidth(self.view.bounds) + translation.x)
@@ -302,13 +309,13 @@ public class StackViewController: UIViewController, UIGestureRecognizerDelegate 
             return
         }
         
-        if recognizer.state == .Cancelled || recognizer.state == .Ended {
+        if recognizer.state == .cancelled || recognizer.state == .ended {
             let movedDistance = toViewController.view.frame.origin.x
             let movedPercentage = Double(movedDistance/CGRectGetWidth(self.view.bounds))
             
             if 1 - movedPercentage >= self.threshold {
                 // trigger push
-                UIView.animateWithDuration(self.animationDuration, animations: { () -> Void in
+                UIView.animate(withDuration: self.animationDuration, animations: { () -> Void in
                     toViewController.view.frame.origin.x = 0
                     fromViewController.view.frame.origin.x = -CGRectGetWidth(self.view.bounds)/3
                     }, completion: { (finished) -> Void in
@@ -321,24 +328,24 @@ public class StackViewController: UIViewController, UIGestureRecognizerDelegate 
             }
             
             // cancel push
-            UIView.animateWithDuration(self.animationDuration, animations: { () -> Void in
+            UIView.animate(withDuration: self.animationDuration, animations: { () -> Void in
                 toViewController.view.frame.origin.x = CGRectGetWidth(self.view.bounds)
                 fromViewController.view.frame.origin.x = 0
                 }, completion: { (finished) -> Void in
-                    toViewController.willMoveToParentViewController(nil)
+                    toViewController.willMove(toParent: nil)
                     toViewController.view.removeFromSuperview()
-                    toViewController.removeFromParentViewController()
+                    toViewController.removeFromParent()
             })
         }
     }
     
     func handlePopGesture(recognizer: StackPanGestureRecognizer) {
-        if recognizer.state == .Began {
+        if recognizer.state == .began {
             self.currentViewController = nil
             self.previousViewController = nil
             
             guard self.viewControllers.count >= 2 else {
-                recognizer.state = .Failed
+                recognizer.state = .failed
                 return
             }
             
@@ -347,21 +354,21 @@ public class StackViewController: UIViewController, UIGestureRecognizerDelegate 
             
             self.previousViewController!.view.frame = self.view.bounds
             self.previousViewController!.view.frame.origin.x = -CGRectGetWidth(self.view.bounds)/3
-            self.previousViewController!.view.autoresizingMask = [.FlexibleWidth, .FlexibleHeight]
+            self.previousViewController!.view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
             self.view.insertSubview(self.previousViewController!.view, belowSubview: self.currentViewController!.view)
             
-            self.applyShadowToView(self.currentViewController!.view)
+            self.applyShadowToView(view: self.currentViewController!.view)
             
             return
         }
         
-        guard let toViewController = self.previousViewController, fromViewController = self.currentViewController else {
-            recognizer.state = .Failed
+        guard let toViewController = self.previousViewController, let fromViewController = self.currentViewController else {
+            recognizer.state = .failed
             return
         }
         
-        if recognizer.state == .Changed {
-            let translation = recognizer.translationInView(self.view)
+        if recognizer.state == .changed {
+            let translation = recognizer.translation(in: self.view)
             let progress = translation.x/CGRectGetWidth(self.view.bounds)
             
             toViewController.view.frame.origin.x = max(-CGRectGetWidth(self.view.bounds)/3, -CGRectGetWidth(self.view.bounds)/3 + CGRectGetWidth(self.view.bounds)/3 * progress)
@@ -370,19 +377,19 @@ public class StackViewController: UIViewController, UIGestureRecognizerDelegate 
             return
         }
         
-        if recognizer.state == .Cancelled || recognizer.state == .Ended {
+        if recognizer.state == .cancelled || recognizer.state == .ended {
             let movedDistance = fromViewController.view.frame.origin.x
             let movedPercentage = Double(movedDistance/CGRectGetWidth(self.view.bounds))
             
             if movedPercentage >= self.threshold {
                 // POP
-                UIView.animateWithDuration(self.animationDuration, animations: { () -> Void in
+                UIView.animate(withDuration: self.animationDuration, animations: { () -> Void in
                     toViewController.view.frame.origin.x = 0
                     fromViewController.view.frame.origin.x = CGRectGetWidth(self.view.bounds)
                     }, completion: { (finished) -> Void in
-                        fromViewController.willMoveToParentViewController(nil)
+                        fromViewController.willMove(toParent: nil)
                         fromViewController.view.removeFromSuperview()
-                        fromViewController.removeFromParentViewController()
+                        fromViewController.removeFromParent()
                         
                         self.stack.removeLast()
                 })
@@ -391,7 +398,7 @@ public class StackViewController: UIViewController, UIGestureRecognizerDelegate 
             }
             
             // cancel POP
-            UIView.animateWithDuration(self.animationDuration, animations: { () -> Void in
+            UIView.animate(withDuration: self.animationDuration, animations: { () -> Void in
                 toViewController.view.frame.origin.x = -CGRectGetWidth(self.view.bounds)/3
                 fromViewController.view.frame.origin.x = 0
                 }, completion: { (finished) -> Void in
@@ -400,18 +407,18 @@ public class StackViewController: UIViewController, UIGestureRecognizerDelegate 
         }
     }
     
-    public func gestureRecognizer(gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWithGestureRecognizer otherGestureRecognizer: UIGestureRecognizer) -> Bool {
-        return self.panGestureRecognizer.state != .Failed
+    public func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
+        return self.panGestureRecognizer.state != .failed
     }
     
-    public func gestureRecognizer(gestureRecognizer: UIGestureRecognizer, shouldBeRequiredToFailByGestureRecognizer otherGestureRecognizer: UIGestureRecognizer) -> Bool {
+    public func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldBeRequiredToFailBy otherGestureRecognizer: UIGestureRecognizer) -> Bool {
         
         guard let dataSource = self.topViewController as? StackViewControllerProtocol else {
             self.panGestureRecognizer.scrollView = nil
             return otherGestureRecognizer.view is UIScrollView
         }
         
-        guard let scrollView = dataSource.scrollViewOnStackViewController?(self) else {
+        guard let scrollView = dataSource.scrollViewOnStackViewController(stackViewController: self) else {
             self.panGestureRecognizer.scrollView = nil
             return otherGestureRecognizer.view is UIScrollView
         }
@@ -421,18 +428,19 @@ public class StackViewController: UIViewController, UIGestureRecognizerDelegate 
     }
     
     // MARK: - Interface orientations
-    
-    public override func shouldAutorotate() -> Bool {
-        return self.topViewController?.shouldAutorotate() ?? super.shouldAutorotate()
+    public override var shouldAutorotate: Bool{
+        return self.topViewController?.shouldAutorotate ?? super.shouldAutorotate
     }
     
-    public override func supportedInterfaceOrientations() -> UIInterfaceOrientationMask {
-        return self.topViewController?.supportedInterfaceOrientations() ?? super.supportedInterfaceOrientations()
+ 
+    public override var supportedInterfaceOrientations: UIInterfaceOrientationMask{
+        return self.topViewController?.supportedInterfaceOrientations ?? super.supportedInterfaceOrientations
     }
+   
     
     // MARK: - Private methods
     
-    private func makePopTransitionFromViewController(fromViewController: UIViewController, toViewController: UIViewController) -> Void -> Void {
+    private func makePopTransitionFromViewController(fromViewController: UIViewController, toViewController: UIViewController) -> () -> Void {
         toViewController.view.frame.origin.x = -CGRectGetWidth(self.view.bounds)/3
         
         return {
@@ -441,7 +449,7 @@ public class StackViewController: UIViewController, UIGestureRecognizerDelegate 
         }
     }
     
-    private func makePushTransitionFromViewController(fromViewController: UIViewController?, toViewController: UIViewController) -> Void -> Void {
+    private func makePushTransitionFromViewController(fromViewController: UIViewController?, toViewController: UIViewController) -> () -> Void {
         toViewController.view.frame.origin.x = CGRectGetWidth(self.view.bounds)
         
         return {
@@ -450,9 +458,9 @@ public class StackViewController: UIViewController, UIGestureRecognizerDelegate 
         }
     }
     
-    private func pushFromViewController(fromViewController: UIViewController?, toViewController: UIViewController, animated: Bool, completion: Void -> Void) {
+    private func pushFromViewController(fromViewController: UIViewController?, toViewController: UIViewController, animated: Bool, completion:  @escaping  () -> Void) {
         toViewController.view.frame = CGRectMake(0, 0, CGRectGetWidth(self.view.bounds), CGRectGetHeight(self.view.bounds))
-        toViewController.view.autoresizingMask = [.FlexibleWidth, .FlexibleHeight]
+        toViewController.view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         
         guard let fromViewController = fromViewController else {
             self.view.addSubview(toViewController.view)
@@ -462,7 +470,7 @@ public class StackViewController: UIViewController, UIGestureRecognizerDelegate 
         
         self.view.insertSubview(toViewController.view, aboveSubview: fromViewController.view)
         
-        let animations = self.makePushTransitionFromViewController(fromViewController, toViewController: toViewController)
+        let animations = self.makePushTransitionFromViewController(fromViewController: fromViewController, toViewController: toViewController)
         
         if !animated {
             animations()
@@ -470,18 +478,18 @@ public class StackViewController: UIViewController, UIGestureRecognizerDelegate 
             return
         }
         
-        UIView.animateWithDuration(self.animationDuration, animations: animations, completion: { (finished) -> Void in
+        UIView.animate(withDuration: self.animationDuration, animations: animations, completion: { (finished) -> Void in
             completion()
         })
     }
     
-    private func popFromViewController(fromViewController: UIViewController, toViewController: UIViewController, animated: Bool, completion: Void -> Void) {
+    private func popFromViewController(fromViewController: UIViewController, toViewController: UIViewController, animated: Bool,completion:  @escaping () -> Void) {
         toViewController.view.frame = CGRectMake(0, 0, CGRectGetWidth(self.view.bounds), CGRectGetHeight(self.view.bounds))
-        toViewController.view.autoresizingMask = [.FlexibleWidth, .FlexibleHeight]
+        toViewController.view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         
         self.view.insertSubview(toViewController.view, belowSubview: fromViewController.view)
         
-        let animations = self.makePopTransitionFromViewController(fromViewController, toViewController: toViewController)
+        let animations = self.makePopTransitionFromViewController(fromViewController: fromViewController, toViewController: toViewController)
         
         if !animated {
             animations()
@@ -489,7 +497,7 @@ public class StackViewController: UIViewController, UIGestureRecognizerDelegate 
             return
         }
         
-        UIView.animateWithDuration(self.animationDuration, animations: animations, completion: { (finished) -> Void in
+        UIView.animate(withDuration: self.animationDuration, animations: animations, completion: { (finished) -> Void in
             completion()
         })
     }
@@ -497,10 +505,10 @@ public class StackViewController: UIViewController, UIGestureRecognizerDelegate 
     private func applyShadowToView(view: UIView) {
         let path = UIBezierPath(rect: view.bounds)
         view.layer.masksToBounds = false
-        view.layer.shadowColor = self.shadowColor.CGColor
+        view.layer.shadowColor = self.shadowColor.cgColor
         view.layer.shadowOffset = self.shadowOffset
         view.layer.shadowOpacity = Float(self.shadowOpacity)
-        view.layer.shadowPath = path.CGPath
+        view.layer.shadowPath = path.cgPath
     }
     
 }
@@ -511,12 +519,12 @@ public extension UIViewController {
     
     /// If this view controller has been push onto a stack view controller, return it.
     var stackViewController: StackViewController? {
-        var parent = self.parentViewController
+        var parent = self.parent
         while parent != nil {
             if parent is StackViewController {
                 return parent as? StackViewController
             }
-            parent = parent?.parentViewController
+            parent = parent?.parent
         }
         return nil
     }

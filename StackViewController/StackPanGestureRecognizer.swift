@@ -7,7 +7,6 @@
 //
 
 import UIKit
-import UIKit.UIGestureRecognizerSubclass
 
 class StackPanGestureRecognizer: UIPanGestureRecognizer {
     
@@ -27,16 +26,17 @@ class StackPanGestureRecognizer: UIPanGestureRecognizer {
         self.failed = nil
     }
     
-    override func touchesMoved(touches: Set<UITouch>, withEvent event: UIEvent) {
-        super.touchesMoved(touches, withEvent: event)
+
+    override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent) {
+        super.touchesMoved(touches, with: event)
         
-        guard self.state != .Failed else {
+        guard self.state != .failed else {
             return
         }
         
         if let failed = self.failed {
             if failed {
-                self.state = .Failed
+                self.state = .failed
             }
             return
         }
@@ -45,13 +45,13 @@ class StackPanGestureRecognizer: UIPanGestureRecognizer {
             return
         }
         
-        let currentLocation = touch.locationInView(self.view)
-        let previousLocation = touch.previousLocationInView(self.view)
+        let currentLocation = touch.location(in: self.view)
+        let previousLocation = touch.previousLocation(in: self.view)
         
         let translation = CGPoint(x: currentLocation.x - previousLocation.x, y: currentLocation.y - previousLocation.y)
         
-        if fabs(translation.y) > fabs(translation.x) {
-            self.state = .Failed
+        if abs(translation.y) > abs(translation.x) {
+            self.state = .failed
             self.failed = true
             return
         } else {
@@ -80,7 +80,7 @@ class StackPanGestureRecognizer: UIPanGestureRecognizer {
             if fixedOffsetX <= 0 {
                 self.failed = false
             } else {
-                self.state = .Failed
+                self.state = .failed
                 self.failed = true
             }
             return
@@ -91,7 +91,7 @@ class StackPanGestureRecognizer: UIPanGestureRecognizer {
             if fixedOffsetX + scrollView.bounds.size.width >= scrollView.contentSize.width {
                 self.failed = false
             } else {
-                self.state = .Failed
+                self.state = .failed
                 self.failed = true
             }
         }
